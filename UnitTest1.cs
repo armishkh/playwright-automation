@@ -3,81 +3,51 @@ using Microsoft.Playwright.NUnit;
 using Allure.NUnit;
 using Allure.Net.Commons.Attributes;
 using NUnit.Framework;
-
-namespace playwright
+namespace PlaywrightSauceDemo
 {
     [AllureNUnit]
     public class Tests
     {
         IPlaywright playwright=null!;
         IPage page=null!;
-        IBrowser playwrightBrowser=null!;
-
+        IBrowser browser=null!;
         [Test]
         [AllureStep]
-        public async Task DocAppointmentTest()
+        public async Task PlacingOrder()
         {
-            // Launch Playwright
+            //launching browser
             playwright = await Playwright.CreateAsync();
-
-            playwrightBrowser = await playwright.Chromium.LaunchAsync(
+            browser = await playwright.Chromium.LaunchAsync(
                 new BrowserTypeLaunchOptions
                 {
                     Headless = false
                 });
+            //new page
+            page = await browser.NewPageAsync();
+            //website
+            await page.GotoAsync("https://www.saucedemo.com/");
+            //logging in
+            await page.FillAsync("#user-name", "standard_user");
+            await page.FillAsync("#password", "secret_sauce");
+            await page.ClickAsync("#login-button");
+            //adding product to cart
+            await page.ClickAsync("#add-to-cart-sauce-labs-backpack");
+            //going to cart
+            await page.ClickAsync("//a[@class='shopping_cart_link']");
+            //checkout
+            await page.ClickAsync("#checkout");
+            //order details
+            await page.FillAsync("#first-name", "ABC");
+            await page.FillAsync("#last-name", "XYZ");
+            await page.FillAsync("#postal-code", "0000");
+            //placing order
+            await page.ClickAsync("#continue");
+            await page.ClickAsync("#finish");
+            //confirmation
+            string Text = await page.InnerTextAsync("//h2[@class='complete-header']");
+            Assert.That(Text.Trim(),Is.EqualTo("Thank you for your order!"));
 
-            // Open new page
-            page = await playwrightBrowser.NewPageAsync();
-
-            // Open Website
-            await page.GotoAsync("https://katalon-demo-cura.herokuapp.com/");
-
-            // Click Make Appointment
-            await page.ClickAsync("#btn-make-appointment");
-
-            // Login
-            await page.FillAsync("#txt-username", "John Doe");
-            await page.FillAsync("#txt-password", "ThisIsNotAPassword");
-            await page.ClickAsync("#btn-login");
-
-            // Verify Login Successful
-            string actual =
-                await page.InnerTextAsync("//h2[contains(text(),'Make Appointment')]");
-
-            Assert.That(actual.Trim(), Is.EqualTo("Make Appointment"));
-
-            // Select Facility
-            await page.SelectOptionAsync("#combo_facility", "Tokyo CURA Healthcare Center");
-
-            // Hospital Readmission Checkbox
-            await page.CheckAsync("#chk_hospotal_readmission");
-
-            // Select Medicaid Program
-            await page.CheckAsync("#radio_program_medicaid");
-
-            // Select Visit Date
-            await page.ClickAsync("#txt_visit_date");
-            await page.Keyboard.TypeAsync("20/05/2026");
-
-            // Add Comment
-            await page.FillAsync(
-                "#txt_comment",
-                "Appointment booked through Playwright automation");
-
-            // Click Book Appointment
-            await page.ClickAsync("#btn-book-appointment");
-
-            // Verify Appointment Confirmation
-            string confirmation =
-                await page.InnerTextAsync(
-                    "//h2[contains(text(),'Appointment Confirmation')]");
-
-
-            Assert.That(confirmation.Trim(), Is.EqualTo("Appointment Confirmation"));
-
-
-            // Close Browser
-            await playwrightBrowser.CloseAsync();
         }
+       
     }
 }
